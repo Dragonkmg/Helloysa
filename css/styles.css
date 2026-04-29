@@ -77,6 +77,7 @@
   --bs-link-hover-color: #0a58ca;
   --bs-code-color: #d63384;
   --bs-highlight-bg: #fff3cd;
+  --corFundo: #FCFFFD;
 }
 
 *,
@@ -10823,4 +10824,8 @@ textarea.form-control-lg {
   .d-print-none {
     display: none !important;
   }
+}
+
+body {
+    background-color: var(--cor-fundo);
 }
