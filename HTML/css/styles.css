@@ -3860,9 +3860,13 @@ textarea.form-control-lg {
 .gothic-title {
     font-family: 'UnifrakturCook', cursive;
     letter-spacing: 2px;
-    -webkit-text-stroke: 1px white;
-    color: black;
+    color: black; /* O preenchimento fica intacto */
     font-size: 4rem;
+    text-shadow: 
+        -1px -1px 0 #fff,  
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
 }
 
 .gothic-subtitle {

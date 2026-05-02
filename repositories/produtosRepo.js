@@ -8,7 +8,7 @@ function buscarProdutos({ busca = "", tag = "" } = {}) {
             LEFT JOIN produto_tags pt ON p.id = pt.produto_id
             LEFT JOIN tags t ON t.id = pt.tag_id
             JOIN produtos pai
-                ON pai.id = COALESCE(p.item_pai, p.id)
+                ON pai.id = COALESCE(NULLIF(p.item_pai, ''), p.id)
             WHERE
                 p.ativo = 1
                 AND pai.ativo = 1
