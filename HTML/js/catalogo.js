@@ -23,3 +23,24 @@ export function renderizarCatalogo(produtos) {
         container.innerHTML += criarCardProduto(produto);
     });
 }
+
+function aplicarBuscaDaUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const busca = params.get('busca');
+
+  if (!busca) {
+    return;
+  }
+
+  const inputBusca = document.getElementById('inputBusca');
+
+  if (!inputBusca) {
+    return;
+  }
+
+  inputBusca.value = busca;
+
+  inputBusca.dispatchEvent(new Event('input', {
+    bubbles: true
+  }));
+}
