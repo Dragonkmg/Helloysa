@@ -7,43 +7,20 @@
   <title>Produto - Helloja</title>
 
   <link rel="stylesheet" href="/css/produto.css" />
+  <link rel="stylesheet" href="/css/navbar.css">
 </head>
 <body>
   <!-- NAV -->
-    <nav class="navbar d-flex flex-nowrap align-items-center" id="mainNavbar">
-        <a href="/index.html" class="logo flex-shrink-0" aria-label="Helloja"></a>
+    <body>
+      <div id="navbar-root"></div>
 
-        <form class="search-bar flex-grow-1 mx-3" id="formBuscaProduto">
-            <input 
-            id="inputBusca" 
-            type="text" 
-            class="form-control" 
-            placeholder="Buscar produtos..."
-            autocomplete="off"
-            >
-        </form>
+      <main class="pagina-produto">
+        ...
+      </main>
 
-        <div class="nav-links d-flex flex-nowrap gap-3">
-            <a href="/index.html" class="tag-link active" data-tag="catalogo">Produtos</a>
-            <a href="/index.html?tag=ofertas" class="tag-link" data-tag="ofertas">Ofertas</a>
-        </div>
-
-        <div class="user-actions d-flex flex-nowrap gap-2 ms-3">
-            <a href="/carrinho.html" class="btn-icon btn-cart" aria-label="Carrinho">
-            <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2Zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2ZM7.2 14.8c-.75 0-1.4-.42-1.73-1.03L2 4H1V2h2.35l.95 2h15.4c.75 0 1.25.78.94 1.46l-2.9 6.22A2.99 2.99 0 0 1 15.02 13H8.1l-1.1 2H19v2H7.2Z"/>
-            </svg>
-
-            <span id="contador-carrinho" class="contador-carrinho">0</span>
-            </a>
-
-            <a href="/perfil.html" class="btn-icon" aria-label="Perfil">
-            <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-3.34 0-10 1.68-10 5v3h20v-3c0-3.32-6.66-5-10-5Z"/>
-            </svg>
-            </a>
-        </div>
-    </nav>
+      <script src="/js/navbar.js"></script>
+      <script src="/js/produto.js"></script>
+    </body>
 
   <main class="pagina-produto">
     <section id="status-produto" class="status-produto">

@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', iniciarPagina);
 async function iniciarPagina() {
   configurarNavbar();
   configurarBuscaNavbar();
-  atualizarContadorCarrinho();
+  
+  if (window.HellojaNavbar) {
+    window.HellojaNavbar.atualizarContadorCarrinho();
+  }
 
   const id = obterIdProdutoDaUrl();
 
@@ -296,7 +299,12 @@ function adicionarAoCarrinho() {
   }
 
   salvarCarrinho(carrinho);
-  atualizarContadorCarrinho();
+
+  if (window.HellojaNavbar) {
+    window.HellojaNavbar.atualizarContadorCarrinho();
+  }
+
+  mostrarMensagem('Produto adicionado ao carrinho.');
 
   mostrarMensagem('Produto adicionado ao carrinho.');
 }
@@ -333,12 +341,6 @@ function salvarCarrinho(carrinho) {
   localStorage.setItem('helloja_carrinho_v1', JSON.stringify(carrinho));
 }
 
-function atualizarContadorCarrinho() {
-  const contador = document.getElementById('contador-carrinho');
-
-  if (!contador) {
-    return;
-  }
 
   const carrinho = carregarCarrinho();
 
