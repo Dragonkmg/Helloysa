@@ -78,40 +78,11 @@
         <section class="card-finalizacao">
           <h2>Finalizar compra</h2>
 
+          <div id="status-login-finalizacao" class="resultado-pedido">
+            Verificando login...
+          </div>
+
           <form id="form-finalizacao" class="form-finalizacao">
-            <label>
-              Nome
-              <input
-                id="cliente-nome"
-                name="nome"
-                type="text"
-                placeholder="Nome do comprador"
-                autocomplete="name"
-              />
-            </label>
-
-            <label>
-              E-mail
-              <input
-                id="cliente-email"
-                name="email"
-                type="email"
-                placeholder="email@exemplo.com"
-                autocomplete="email"
-              />
-            </label>
-
-            <label>
-              Telefone
-              <input
-                id="cliente-telefone"
-                name="telefone"
-                type="tel"
-                placeholder="Telefone ou WhatsApp"
-                autocomplete="tel"
-              />
-            </label>
-
             <button id="btn-finalizar" class="btn-finalizar" type="submit">
               Finalizar compra
             </button>
@@ -123,7 +94,8 @@
     </section>
   </main>
 
-  <script src="js/navbar.js"></script>
-  <script src="js/carrinho.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/carrinho.js"></script>
 </body>
 </html>

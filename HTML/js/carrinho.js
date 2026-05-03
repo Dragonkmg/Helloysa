@@ -2,16 +2,19 @@ const CHAVE_CARRINHO = "helloja_carrinho_v1";
 
 const estadoCarrinho = {
   carrinho: { itens: [] },
-  enviando: false
+  enviando: false,
+  usuario: null
 };
 
 document.addEventListener("DOMContentLoaded", iniciarCarrinho);
 
-function iniciarCarrinho() {
+async function iniciarCarrinho() {
   estadoCarrinho.carrinho = carregarCarrinho();
 
   configurarEventos();
   renderizarCarrinho();
+
+  await verificarLoginFinalizacao();
 }
 
 function configurarEventos() {
@@ -24,6 +27,88 @@ function configurarEventos() {
 
   if (formFinalizacao) {
     formFinalizacao.addEventListener("submit", finalizarCompra);
+  }
+
+  window.addEventListener("helloja:auth-atualizado", async () => {
+    await verificarLoginFinalizacao();
+    renderizarCarrinho();
+  });
+}
+
+async function verificarLoginFinalizacao() {
+  const status = document.getElementById("status-login-finalizacao");
+
+  if (!window.HellojaAuth) {
+    estadoCarrinho.usuario = null;
+
+    if (status) {
+      status.classList.add("erro");
+      status.textContent = "Não foi possível carregar o sistema de login. Recarregue a página.";
+    }
+
+    return null;
+  }
+
+  const sessaoLocal = HellojaAuth.obterSessao();
+
+  if (!sessaoLocal) {
+    estadoCarrinho.usuario = null;
+    renderizarStatusLogin();
+    return null;
+  }
+
+  const sessaoVerificada = await HellojaAuth.verificarSessao();
+
+  if (!sessaoVerificada || !sessaoVerificada.usuario) {
+    estadoCarrinho.usuario = null;
+    renderizarStatusLogin();
+    return null;
+  }
+
+  estadoCarrinho.usuario = sessaoVerificada.usuario;
+  renderizarStatusLogin();
+
+  return sessaoVerificada.usuario;
+}
+
+function renderizarStatusLogin() {
+  const status = document.getElementById("status-login-finalizacao");
+  const btnFinalizar = document.getElementById("btn-finalizar");
+
+  if (!status) return;
+
+  const usuario = estadoCarrinho.usuario;
+
+  status.classList.remove("erro");
+
+  if (!usuario) {
+    status.classList.add("erro");
+    status.innerHTML = `
+      <strong>Login necessário.</strong>
+      <br />
+      Para finalizar a compra, entre na sua conta ou crie um cadastro.
+    `;
+
+    if (btnFinalizar) {
+      btnFinalizar.textContent = "Entrar para finalizar compra";
+    }
+
+    return;
+  }
+
+  status.innerHTML = `
+    <strong>Compra vinculada ao perfil.</strong>
+    <br />
+    ${escaparHtml(usuario.nome || "Cliente")} — ${escaparHtml(usuario.email || "")}
+    ${
+      usuario.telefone
+        ? `<br />Telefone: ${escaparHtml(usuario.telefone)}`
+        : ""
+    }
+  `;
+
+  if (btnFinalizar) {
+    btnFinalizar.textContent = "Finalizar compra";
   }
 }
 
@@ -112,6 +197,8 @@ function renderizarCarrinho() {
   if (btnFinalizar) {
     btnFinalizar.disabled = false;
   }
+
+  renderizarStatusLogin();
 }
 
 function criarElementoItem(item) {
@@ -309,6 +396,28 @@ async function finalizarCompra(evento) {
     return;
   }
 
+  if (!window.HellojaAuth) {
+    mostrarResultadoPedido(
+      {
+        erro: true,
+        mensagem: "Sistema de login não carregado. Recarregue a página."
+      },
+      true
+    );
+    return;
+  }
+
+  let usuario = estadoCarrinho.usuario;
+
+  if (!usuario) {
+    usuario = await verificarLoginFinalizacao();
+  }
+
+  if (!usuario) {
+    HellojaAuth.redirecionarParaLogin("/carrinho.html");
+    return;
+  }
+
   const payload = montarPayloadPedido(itens);
 
   estadoCarrinho.enviando = true;
@@ -317,7 +426,7 @@ async function finalizarCompra(evento) {
   mostrarMensagem("Enviando pedido...");
 
   try {
-    const resposta = await fetch("/pedidos", {
+    const resposta = await HellojaAuth.fetchAutenticado("/pedidos", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -331,6 +440,12 @@ async function finalizarCompra(evento) {
       dados = await resposta.json();
     } catch (erroJson) {
       throw new Error("O servidor respondeu, mas não retornou JSON válido.");
+    }
+
+    if (resposta.status === 401 || dados.precisa_login) {
+      HellojaAuth.limparSessao();
+      HellojaAuth.redirecionarParaLogin("/carrinho.html");
+      return;
     }
 
     if (!resposta.ok || dados.erro) {
@@ -358,16 +473,7 @@ async function finalizarCompra(evento) {
 }
 
 function montarPayloadPedido(itens) {
-  const nome = document.getElementById("cliente-nome")?.value.trim() || "";
-  const email = document.getElementById("cliente-email")?.value.trim() || "";
-  const telefone = document.getElementById("cliente-telefone")?.value.trim() || "";
-
   return {
-    cliente: {
-      nome,
-      email,
-      telefone
-    },
     itens: itens.map((item) => {
       return {
         produto_id: Number(item.produto_id),
@@ -386,9 +492,14 @@ function atualizarBotaoFinalizar(enviando) {
 
   btn.disabled = enviando;
 
-  btn.textContent = enviando
-    ? "Finalizando..."
-    : "Finalizar compra";
+  if (enviando) {
+    btn.textContent = "Finalizando...";
+    return;
+  }
+
+  btn.textContent = estadoCarrinho.usuario
+    ? "Finalizar compra"
+    : "Entrar para finalizar compra";
 }
 
 function mostrarResultadoPedido(dados, erro = false) {
