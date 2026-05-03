@@ -29,6 +29,19 @@ function get(sql, params = []) {
   });
 }
 
+function all(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (erro, rows) => {
+      if (erro) {
+        reject(erro);
+        return;
+      }
+
+      resolve(rows || []);
+    });
+  });
+}
+
 function criarErroValidacao(mensagem) {
   const erro = new Error(mensagem);
   erro.status = 400;
@@ -39,6 +52,12 @@ function criarErroAutenticacao(mensagem) {
   const erro = new Error(mensagem);
   erro.status = 401;
   erro.precisa_login = true;
+  return erro;
+}
+
+function criarErroNaoEncontrado(mensagem) {
+  const erro = new Error(mensagem);
+  erro.status = 404;
   return erro;
 }
 
@@ -326,6 +345,179 @@ async function criarPedido({ usuario, itens = [] } = {}) {
   }
 }
 
+function validarUsuarioId(usuarioId) {
+  const id = Number(usuarioId);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw criarErroAutenticacao("Faça login para continuar.");
+  }
+
+  return id;
+}
+
+function validarPedidoId(pedidoId) {
+  const id = Number(pedidoId);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw criarErroValidacao("Pedido inválido.");
+  }
+
+  return id;
+}
+
+function normalizarPedidoResumo(pedido) {
+  return {
+    id: pedido.id,
+    usuario_id: pedido.usuario_id,
+    cliente_nome: pedido.cliente_nome,
+    cliente_email: pedido.cliente_email,
+    cliente_telefone: pedido.cliente_telefone || "",
+    subtotal: Number(pedido.subtotal || 0),
+    total: Number(pedido.total || 0),
+    status: pedido.status,
+    status_estoque: pedido.status_estoque,
+    compra_indevida: Number(pedido.compra_indevida) === 1,
+    motivo_indevido: pedido.motivo_indevido,
+    aviso_cliente: pedido.aviso_cliente,
+    criado_em: pedido.criado_em,
+    atualizado_em: pedido.atualizado_em,
+    total_itens: Number(pedido.total_itens || 0),
+    quantidade_total: Number(pedido.quantidade_total || 0)
+  };
+}
+
+function normalizarItemPedido(item) {
+  return {
+    id: item.id,
+    pedido_id: item.pedido_id,
+    produto_id: item.produto_id,
+    nome_snapshot: item.nome_snapshot,
+    sku_snapshot: item.sku_snapshot,
+    preco_unitario: Number(item.preco_unitario || 0),
+    quantidade_solicitada: Number(item.quantidade_solicitada || 0),
+    quantidade_disponivel: Number(item.quantidade_disponivel || 0),
+    subtotal: Number(item.subtotal || 0),
+    estoque_suficiente: Number(item.estoque_suficiente) === 1,
+    produto_ativo: Number(item.produto_ativo) === 1,
+    observacao: item.observacao,
+    criado_em: item.criado_em
+  };
+}
+
+async function listarPedidosDoUsuario(usuarioId) {
+  const idUsuario = validarUsuarioId(usuarioId);
+
+  const pedidos = await all(
+    `
+      SELECT
+        pedidos.id,
+        pedidos.usuario_id,
+        pedidos.cliente_nome,
+        pedidos.cliente_email,
+        pedidos.cliente_telefone,
+        pedidos.subtotal,
+        pedidos.total,
+        pedidos.status,
+        pedidos.status_estoque,
+        pedidos.compra_indevida,
+        pedidos.motivo_indevido,
+        pedidos.aviso_cliente,
+        pedidos.criado_em,
+        pedidos.atualizado_em,
+        COUNT(pedido_itens.id) AS total_itens,
+        COALESCE(SUM(pedido_itens.quantidade_solicitada), 0) AS quantidade_total
+      FROM pedidos
+      LEFT JOIN pedido_itens ON pedido_itens.pedido_id = pedidos.id
+      WHERE pedidos.usuario_id = ?
+      GROUP BY pedidos.id
+      ORDER BY pedidos.criado_em DESC, pedidos.id DESC
+    `,
+    [idUsuario]
+  );
+
+  return pedidos.map(normalizarPedidoResumo);
+}
+
+async function listarItensPedido(pedidoId) {
+  const idPedido = validarPedidoId(pedidoId);
+
+  const itens = await all(
+    `
+      SELECT
+        id,
+        pedido_id,
+        produto_id,
+        nome_snapshot,
+        sku_snapshot,
+        preco_unitario,
+        quantidade_solicitada,
+        quantidade_disponivel,
+        subtotal,
+        estoque_suficiente,
+        produto_ativo,
+        observacao,
+        criado_em
+      FROM pedido_itens
+      WHERE pedido_id = ?
+      ORDER BY id ASC
+    `,
+    [idPedido]
+  );
+
+  return itens.map(normalizarItemPedido);
+}
+
+async function buscarPedidoDoUsuario(pedidoId, usuarioId) {
+  const idPedido = validarPedidoId(pedidoId);
+  const idUsuario = validarUsuarioId(usuarioId);
+
+  const pedido = await get(
+    `
+      SELECT
+        id,
+        usuario_id,
+        cliente_nome,
+        cliente_email,
+        cliente_telefone,
+        subtotal,
+        total,
+        status,
+        status_estoque,
+        compra_indevida,
+        motivo_indevido,
+        aviso_cliente,
+        criado_em,
+        atualizado_em,
+        0 AS total_itens,
+        0 AS quantidade_total
+      FROM pedidos
+      WHERE id = ?
+        AND usuario_id = ?
+      LIMIT 1
+    `,
+    [idPedido, idUsuario]
+  );
+
+  if (!pedido) {
+    throw criarErroNaoEncontrado("Pedido não encontrado.");
+  }
+
+  const itens = await listarItensPedido(idPedido);
+
+  return {
+    ...normalizarPedidoResumo({
+      ...pedido,
+      total_itens: itens.length,
+      quantidade_total: itens.reduce((total, item) => {
+        return total + item.quantidade_solicitada;
+      }, 0)
+    }),
+    itens
+  };
+}
+
 module.exports = {
-  criarPedido
+  criarPedido,
+  listarPedidosDoUsuario,
+  buscarPedidoDoUsuario
 };
