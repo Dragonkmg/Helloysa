@@ -1,5 +1,6 @@
 require("./DB/init");
 
+const gerencialRoutes = require("./routes/gerencial");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -23,6 +24,7 @@ app.use("/produtos", produtosRoutes);
 app.use("/produto", produtoDetalheRoutes);
 app.use("/pedidos", pedidosRoutes);
 app.use("/auth", authRoutes);
+app.use("/gerencial", gerencialRoutes);
 
 // Página inicial
 app.get("/", (req, res) => {

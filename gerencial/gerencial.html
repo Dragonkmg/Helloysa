@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Gerencial Local - Helloja</title>
+
+  <style>
+    :root {
+      --roxo: #4c1a57;
+      --verde: #2e8b57;
+      --dourado: #cf995f;
+      --fundo: #fcfffd;
+      --texto: #211824;
+      --suave: #65586a;
+      --borda: rgba(76, 26, 87, 0.14);
+      --card: rgba(255, 255, 255, 0.92);
+      --sombra: 0 16px 42px rgba(76, 26, 87, 0.12);
+      --erro: #9a1f36;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: var(--texto);
+      background:
+        radial-gradient(circle at top left, rgba(207, 153, 95, 0.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(46, 139, 87, 0.10), transparent 34%),
+        var(--fundo);
+    }
+
+    main {
+      width: min(1200px, 94%);
+      margin: 40px auto 70px;
+    }
+
+    header {
+      margin-bottom: 26px;
+    }
+
+    .etiqueta {
+      margin: 0 0 8px;
+      color: var(--verde);
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--roxo);
+      font-size: clamp(2.4rem, 6vw, 4.5rem);
+      line-height: 0.98;
+      letter-spacing: -0.07em;
+    }
+
+    header p {
+      max-width: 760px;
+      color: var(--suave);
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .coluna {
+      display: grid;
+      gap: 22px;
+    }
+
+    .card {
+      border: 1px solid var(--borda);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: var(--sombra);
+      padding: 24px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      color: var(--roxo);
+      font-size: 1.35rem;
+    }
+
+    .texto {
+      margin: 0 0 18px;
+      color: var(--suave);
+      line-height: 1.6;
+    }
+
+    form {
+      display: grid;
+      gap: 13px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--roxo);
+      font-weight: 900;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(76, 26, 87, 0.16);
+      border-radius: 18px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--texto);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: rgba(207, 153, 95, 0.85);
+      box-shadow: 0 0 0 3px rgba(207, 153, 95, 0.18);
+    }
+
+    .linha {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+    }
+
+    button,
+    .botao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--roxo);
+      color: var(--fundo);
+      padding: 0 18px;
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 12px 22px rgba(76, 26, 87, 0.22);
+    }
+
+    button:hover,
+    .botao:hover {
+      background: var(--verde);
+    }
+
+    button:disabled {
+      background: #9a929e;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .botao-secundario {
+      background: rgba(76, 26, 87, 0.08);
+      color: var(--roxo);
+      box-shadow: none;
+    }
+
+    .botao-secundario:hover {
+      background: var(--roxo);
+      color: var(--fundo);
+    }
+
+    .acoes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .mensagem {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 18px;
+      color: var(--roxo);
+      background: rgba(46, 139, 87, 0.10);
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .mensagem.erro {
+      color: var(--erro);
+      background: rgba(154, 31, 54, 0.08);
+    }
+
+    .escondido {
+      display: none !important;
+    }
+
+    .tabela-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(76, 26, 87, 0.10);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--roxo);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    td {
+      color: var(--texto);
+      font-size: 0.95rem;
+    }
+
+    .tag-status {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: rgba(46, 139, 87, 0.10);
+      color: var(--verde);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag-alerta {
+      background: rgba(207, 153, 95, 0.16);
+      color: #7a4d18;
+    }
+
+    .detalhes-pedido {
+      display: grid;
+      gap: 12px;
+    }
+
+    .caixa-detalhe {
+      border-radius: 18px;
+      background: rgba(252, 255, 253, 0.72);
+      border: 1px solid rgba(76, 26, 87, 0.10);
+      padding: 14px;
+    }
+
+    .caixa-detalhe h3 {
+      margin: 0 0 8px;
+      color: var(--roxo);
+      font-size: 1.05rem;
+    }
+
+    .caixa-detalhe p {
+      margin: 4px 0;
+      color: var(--suave);
+    }
+
+    .lista-itens {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .item-pedido {
+      border-radius: 16px;
+      background: white;
+      padding: 12px;
+    }
+
+    .item-pedido strong {
+      color: var(--roxo);
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      main {
+        width: 94%;
+        margin-top: 28px;
+      }
+
+      .card {
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      .linha {
+        grid-template-columns: 1fr;
+      }
+
+      .acoes {
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="etiqueta">Admin local</p>
+      <h1>Helloja Gerencial</h1>
+      <p>
+        Ferramentas locais para cadastrar produtos, importar imagens e consultar compras.
+        Acesse esta tela somente pela máquina do servidor usando localhost.
+      </p>
+    </header>
+
+    <section class="grid">
+      <div class="coluna">
+        <section class="card">
+          <h2>Criar produto</h2>
+          <p class="texto">
+            Cria o produto no banco. Depois use o ID gerado para criar a pasta de imagens.
+          </p>
+
+          <form id="form-produto">
+            <label>
+              Nome
+              <input id="produto-nome" required placeholder="Ex: Vestido preto" />
+            </label>
+
+            <label>
+              Descrição
+              <textarea id="produto-descricao" placeholder="Descrição do produto"></textarea>
+            </label>
+
+            <div class="linha">
+              <label>
+                Preço
+                <input id="produto-preco" type="number" step="0.01" min="0" required placeholder="89.90" />
+              </label>
+
+              <label>
+                Preço promocional
+                <input id="produto-preco-promo" type="number" step="0.01" min="0" placeholder="79.90" />
+              </label>
+            </div>
+
+            <div class="linha">
+              <label>
+                Quantidade
+                <input id="produto-qtd" type="number" step="1" min="0" value="0" />
+              </label>
+
+              <label>
+                SKU
+                <input id="produto-sku" placeholder="VES-PR" />
+              </label>
+            </div>
+
+            <label>
+              Tags
+              <input id="produto-tags" placeholder="vestidos, preto, promoção" />
+            </label>
+
+            <label>
+              Ativo
+              <select id="produto-ativo">
+                <option value="1">Sim</option>
+                <option value="0">Não</option>
+              </select>
+            </label>
+
+            <button id="btn-criar-produto" type="submit">
+              Criar produto
+            </button>
+          </form>
+
+          <div id="msg-produto" class="mensagem escondido"></div>
+        </section>
+
+        <section class="card">
+          <h2>Importar imagens</h2>
+          <p class="texto">
+            Coloque as imagens em <strong>HTML/assets/img/IDProduto</strong>.
+            A primeira imagem em ordem alfabética será marcada como principal.
+            Ao importar, os registros antigos de imagens desse produto serão substituídos.
+          </p>
+
+          <form id="form-imagens">
+            <label>
+              ID do produto
+              <input id="imagem-produto-id" type="number" step="1" min="1" required placeholder="Ex: 7" />
+            </label>
+
+            <button id="btn-importar-imagens" type="submit">
+              Importar imagens da pasta
+            </button>
+          </form>
+
+          <div id="msg-imagens" class="mensagem escondido"></div>
+        </section>
+      </div>
+
+      <div class="coluna">
+        <section class="card">
+          <h2>Pedidos</h2>
+          <p class="texto">
+            Consulte pedidos recentes, compras indevidas e detalhes de cada compra.
+          </p>
+
+          <div class="acoes">
+            <button id="btn-listar-pedidos" type="button">Listar pedidos</button>
+            <button id="btn-listar-indevidos" class="botao-secundario" type="button">Compras indevidas</button>
+          </div>
+
+          <div id="msg-pedidos" class="mensagem escondido"></div>
+
+          <div class="tabela-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Estoque</th>
+                  <th>Data</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-pedidos"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Detalhes do pedido</h2>
+
+          <form id="form-buscar-pedido">
+            <label>
+              ID do pedido
+              <input id="pedido-id" type="number" step="1" min="1" placeholder="Ex: 3" required />
+            </label>
+
+            <button type="submit">Buscar pedido</button>
+          </form>
+
+          <div id="detalhes-pedido" class="detalhes-pedido"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const refs = {
+      formProduto: document.getElementById("form-produto"),
+      formImagens: document.getElementById("form-imagens"),
+      formBuscarPedido: document.getElementById("form-buscar-pedido"),
+      btnListarPedidos: document.getElementById("btn-listar-pedidos"),
+      btnListarIndevidos: document.getElementById("btn-listar-indevidos"),
+      tabelaPedidos: document.getElementById("tabela-pedidos"),
+      detalhesPedido: document.getElementById("detalhes-pedido")
+    };
+
+    document.addEventListener("DOMContentLoaded", iniciar);
+
+    function iniciar() {
+      refs.formProduto.addEventListener("submit", criarProduto);
+      refs.formImagens.addEventListener("submit", importarImagens);
+      refs.formBuscarPedido.addEventListener("submit", buscarPedidoPorForm);
+      refs.btnListarPedidos.addEventListener("click", () => listarPedidos(false));
+      refs.btnListarIndevidos.addEventListener("click", () => listarPedidos(true));
+
+      checarStatus();
+      listarPedidos(false);
+    }
+
+    async function checarStatus() {
+      try {
+        const dados = await api("/gerencial/api/status");
+        console.log(dados.mensagem);
+      } catch (erro) {
+        console.error(erro);
+      }
+    }
+
+    async function criarProduto(evento) {
+      evento.preventDefault();
+
+      const botao = document.getElementById("btn-criar-produto");
+      alterarBotao(botao, true, "Criando...");
+
+      const payload = {
+        nome: valor("produto-nome"),
+        descricao: valor("produto-descricao"),
+        preco: valor("produto-preco"),
+        preco_promo: valor("produto-preco-promo"),
+        qtd: valor("produto-qtd"),
+        sku: valor("produto-sku"),
+        tags: valor("produto-tags"),
+        ativo: Number(valor("produto-ativo"))
+      };
+
+      try {
+        const dados = await api("/gerencial/api/produtos", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        const produto = dados.produto;
+
+        mostrarMensagem(
+          "msg-produto",
+          `Produto criado com sucesso.\n\nID: ${produto.id}\nNome: ${produto.nome}\n\nAgora crie a pasta:\n${produto.pasta_imagens}`,
+          false
+        );
+
+        document.getElementById("imagem-produto-id").value = produto.id;
+      } catch (erro) {
+        mostrarMensagem("msg-produto", erro.message, true);
+      } finally {
+        alterarBotao(botao, false, "Criar produto");
+      }
+    }
+
+    async function importarImagens(evento) {
+      evento.preventDefault();
+
+      const produtoId = valor("imagem-produto-id");
+      const botao = document.getElementById("btn-importar-imagens");
+
+      alterarBotao(botao, true, "Importando...");
+
+      try {
+        const dados = await api(`/gerencial/api/produtos/${encodeURIComponent(produtoId)}/importar-imagens`, {
+          method: "POST"
+        });
+
+        const resultado = dados.resultado;
+
+        mostrarMensagem(
+          "msg-imagens",
+          `Imagens importadas com sucesso.\n\nProduto: ${resultado.produto_nome}\nTotal: ${resultado.total}\n\n${resultado.imagens.map((img) => `${img.principal ? "[principal] " : ""}${img.caminho}`).join("\n")}`,
+          false
+        );
+      } catch (erro) {
+        mostrarMensagem("msg-imagens", erro.message, true);
+      } finally {
+        alterarBotao(botao, false, "Importar imagens da pasta");
+      }
+    }
+
+    async function listarPedidos(somenteIndevidos) {
+      const url = somenteIndevidos
+        ? "/gerencial/api/pedidos/indevidos"
+        : "/gerencial/api/pedidos";
+
+      try {
+        mostrarMensagem(
+          "msg-pedidos",
+          somenteIndevidos ? "Carregando compras indevidas..." : "Carregando pedidos...",
+          false
+        );
+
+        const dados = await api(url);
+        renderizarTabelaPedidos(dados.pedidos || []);
+
+        mostrarMensagem(
+          "msg-pedidos",
+          `${dados.pedidos.length} pedido(s) encontrado(s).`,
+          false
+        );
+      } catch (erro) {
+        mostrarMensagem("msg-pedidos", erro.message, true);
+      }
+    }
+
+    function renderizarTabelaPedidos(pedidos) {
+      refs.tabelaPedidos.innerHTML = "";
+
+      if (!pedidos.length) {
+        refs.tabelaPedidos.innerHTML = `
+          <tr>
+            <td colspan="7">Nenhum pedido encontrado.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      pedidos.forEach((pedido) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>#${pedido.id}</td>
+          <td>
+            <strong>${escapar(pedido.cliente_nome || "Cliente")}</strong><br>
+            <small>${escapar(pedido.cliente_email || "")}</small>
+          </td>
+          <td>${formatarMoeda(pedido.total)}</td>
+          <td>
+            <span class="tag-status ${pedido.compra_indevida ? "tag-alerta" : ""}">
+              ${escapar(pedido.status || "-")}
+            </span>
+          </td>
+          <td>${escapar(pedido.status_estoque || "-")}</td>
+          <td>${formatarData(pedido.criado_em)}</td>
+          <td>
+            <button class="botao-secundario" type="button" data-pedido-id="${pedido.id}">
+              Ver
+            </button>
+          </td>
+        `;
+
+        tr.querySelector("[data-pedido-id]").addEventListener("click", () => {
+          buscarPedido(pedido.id);
+        });
+
+        refs.tabelaPedidos.appendChild(tr);
+      });
+    }
+
+    async function buscarPedidoPorForm(evento) {
+      evento.preventDefault();
+
+      await buscarPedido(valor("pedido-id"));
+    }
+
+    async function buscarPedido(id) {
+      try {
+        refs.detalhesPedido.innerHTML = "";
+
+        const dados = await api(`/gerencial/api/pedidos/${encodeURIComponent(id)}`);
+
+        renderizarPedido(dados.pedido);
+      } catch (erro) {
+        refs.detalhesPedido.innerHTML = `
+          <div class="mensagem erro">${escapar(erro.message)}</div>
+        `;
+      }
+    }
+
+    function renderizarPedido(pedido) {
+      const itens = pedido.itens || [];
+
+      refs.detalhesPedido.innerHTML = `
+        <div class="caixa-detalhe">
+          <h3>Pedido #${pedido.id}</h3>
+          <p><strong>Cliente:</strong> ${escapar(pedido.cliente_nome || "")}</p>
+          <p><strong>E-mail:</strong> ${escapar(pedido.cliente_email || "")}</p>
+          <p><strong>Telefone:</strong> ${escapar(pedido.cliente_telefone || "")}</p>
+          <p><strong>Status:</strong> ${escapar(pedido.status || "")}</p>
+          <p><strong>Status estoque:</strong> ${escapar(pedido.status_estoque || "")}</p>
+          <p><strong>Total:</strong> ${formatarMoeda(pedido.total)}</p>
+          <p><strong>Data:</strong> ${formatarData(pedido.criado_em)}</p>
+          ${
+            pedido.compra_indevida
+              ? `<p><strong>Motivo:</strong> ${escapar(pedido.motivo_indevido || "Compra marcada como indevida.")}</p>`
+              : ""
+          }
+        </div>
+
+        <div class="caixa-detalhe">
+          <h3>Itens</h3>
+
+          <div class="lista-itens">
+            ${
+              itens.length
+                ? itens.map(renderizarItemPedido).join("")
+                : "<p>Nenhum item encontrado.</p>"
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderizarItemPedido(item) {
+      return `
+        <div class="item-pedido">
+          <strong>${escapar(item.nome_snapshot || "Produto")}</strong>
+          <p>SKU: ${escapar(item.sku_snapshot || "-")}</p>
+          <p>Quantidade solicitada: ${item.quantidade_solicitada}</p>
+          <p>Quantidade disponível no momento: ${item.quantidade_disponivel}</p>
+          <p>Preço unitário: ${formatarMoeda(item.preco_unitario)}</p>
+          <p>Subtotal: ${formatarMoeda(item.subtotal)}</p>
+          ${
+            item.observacao
+              ? `<p>Observação: ${escapar(item.observacao)}</p>`
+              : ""
+          }
+        </div>
+      `;
+    }
+
+    async function api(url, opcoes = {}) {
+      const resposta = await fetch(url, {
+        ...opcoes,
+        headers: {
+          "Content-Type": "application/json",
+          ...(opcoes.headers || {})
+        }
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok || dados.erro) {
+        throw new Error(dados.mensagem || "Erro na requisição.");
+      }
+
+      return dados;
+    }
+
+    function valor(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function mostrarMensagem(id, texto, erro) {
+      const elemento = document.getElementById(id);
+
+      elemento.textContent = texto;
+      elemento.classList.remove("escondido");
+      elemento.classList.toggle("erro", erro);
+    }
+
+    function alterarBotao(botao, carregando, texto) {
+      if (!botao) return;
+
+      botao.disabled = carregando;
+      botao.textContent = texto;
+    }
+
+    function formatarMoeda(valor) {
+      return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function formatarData(valor) {
+      if (!valor) return "-";
+
+      const data = new Date(String(valor).replace(" ", "T"));
+
+      if (Number.isNaN(data.getTime())) {
+        return valor;
+      }
+
+      return data.toLocaleString("pt-BR");
+    }
+
+    function escapar(valor) {
+      return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
