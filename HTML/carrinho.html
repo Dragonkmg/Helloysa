@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Carrinho - Helloja</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/css/navbar.css">
+  <link rel="stylesheet" href="/css/carrinho.css">
+</head>
+<body>
+  <div id="navbar-root"></div>
+
+  <main class="pagina-carrinho">
+    <header class="cabecalho-carrinho">
+      <p class="etiqueta-pagina">Seu carrinho</p>
+      <h1>Carrinho e finalização</h1>
+      <p>
+        Revise os produtos escolhidos, ajuste quantidades e finalize a compra.
+      </p>
+    </header>
+
+    <section id="mensagem-carrinho" class="mensagem-carrinho escondido"></section>
+
+    <section id="carrinho-vazio" class="carrinho-vazio escondido">
+      <h2>Seu carrinho está vazio.</h2>
+      <p>Escolha algum produto no catálogo antes de finalizar uma compra.</p>
+      <a href="/index.html" class="btn-secundario">Ver produtos</a>
+    </section>
+
+    <section id="area-carrinho" class="layout-carrinho">
+      <div class="card-carrinho">
+        <div class="topo-card">
+          <div>
+            <h2>Itens do carrinho</h2>
+            <p id="resumo-itens">0 itens adicionados</p>
+          </div>
+
+          <button id="btn-limpar-carrinho" class="btn-texto" type="button">
+            Limpar carrinho
+          </button>
+        </div>
+
+        <div id="lista-carrinho" class="lista-carrinho"></div>
+      </div>
+
+      <aside class="resumo-carrinho">
+        <section class="card-resumo">
+          <h2>Resumo</h2>
+
+          <div class="linha-resumo">
+            <span>Subtotal</span>
+            <strong id="subtotal-carrinho">R$ 0,00</strong>
+          </div>
+
+          <div class="linha-resumo">
+            <span>Frete</span>
+            <strong>A combinar</strong>
+          </div>
+
+          <div class="linha-total">
+            <span>Total</span>
+            <strong id="total-carrinho">R$ 0,00</strong>
+          </div>
+
+          <p class="observacao-resumo">
+            O valor oficial será recalculado pelo servidor ao finalizar.
+          </p>
+        </section>
+
+        <section class="card-finalizacao">
+          <h2>Finalizar compra</h2>
+
+          <form id="form-finalizacao" class="form-finalizacao">
+            <label>
+              Nome
+              <input
+                id="cliente-nome"
+                name="nome"
+                type="text"
+                placeholder="Nome do comprador"
+                autocomplete="name"
+              />
+            </label>
+
+            <label>
+              E-mail
+              <input
+                id="cliente-email"
+                name="email"
+                type="email"
+                placeholder="email@exemplo.com"
+                autocomplete="email"
+              />
+            </label>
+
+            <label>
+              Telefone
+              <input
+                id="cliente-telefone"
+                name="telefone"
+                type="tel"
+                placeholder="Telefone ou WhatsApp"
+                autocomplete="tel"
+              />
+            </label>
+
+            <button id="btn-finalizar" class="btn-finalizar" type="submit">
+              Finalizar compra
+            </button>
+          </form>
+
+          <div id="resultado-pedido" class="resultado-pedido escondido"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="js/navbar.js"></script>
+  <script src="js/carrinho.js"></script>
+</body>
+</html>

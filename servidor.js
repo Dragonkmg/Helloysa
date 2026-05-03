@@ -5,7 +5,8 @@ const cors = require("cors");
 const path = require("path");
 
 const produtosRoutes = require("./routes/produtos");
-const produtoDetalheRoutes = require('./routes/produtoDetalhe');
+const produtoDetalheRoutes = require("./routes/produtoDetalhe");
+const pedidosRoutes = require("./routes/pedidos");
 
 const app = express();
 const PORT = 3000;
@@ -18,7 +19,8 @@ app.use(express.static(path.join(__dirname, "HTML")));
 
 // Rotas da API
 app.use("/produtos", produtosRoutes);
-app.use('/produto', produtoDetalheRoutes);
+app.use("/produto", produtoDetalheRoutes);
+app.use("/pedidos", pedidosRoutes);
 
 // Página inicial
 app.get("/", (req, res) => {

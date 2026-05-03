@@ -64,6 +64,56 @@ db.serialize(() => {
     `);
 
     db.run(`
+        CREATE TABLE IF NOT EXISTS pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            cliente_nome TEXT,
+            cliente_email TEXT,
+            cliente_telefone TEXT,
+
+            subtotal REAL NOT NULL DEFAULT 0,
+            total REAL NOT NULL DEFAULT 0,
+
+            status TEXT NOT NULL DEFAULT 'pendente',
+            status_estoque TEXT NOT NULL DEFAULT 'ok',
+
+            compra_indevida INTEGER NOT NULL DEFAULT 0,
+            motivo_indevido TEXT,
+            aviso_cliente TEXT,
+
+            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+            atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS pedido_itens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            pedido_id INTEGER NOT NULL,
+            produto_id INTEGER,
+
+            nome_snapshot TEXT NOT NULL,
+            sku_snapshot TEXT,
+            preco_unitario REAL NOT NULL DEFAULT 0,
+
+            quantidade_solicitada INTEGER NOT NULL,
+            quantidade_disponivel INTEGER NOT NULL DEFAULT 0,
+
+            subtotal REAL NOT NULL DEFAULT 0,
+
+            estoque_suficiente INTEGER NOT NULL DEFAULT 1,
+            produto_ativo INTEGER NOT NULL DEFAULT 1,
+            observacao TEXT,
+
+            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+            FOREIGN KEY (produto_id) REFERENCES produtos(id)
+        )
+    `);
+
+    db.run(`
         CREATE INDEX IF NOT EXISTS idx_produtos_ativo
         ON produtos(ativo)
     `);
@@ -86,5 +136,25 @@ db.serialize(() => {
     db.run(`
         CREATE INDEX IF NOT EXISTS idx_comentarios_produto
         ON comentarios(produto_id)
+    `);
+
+    db.run(`
+        CREATE INDEX IF NOT EXISTS idx_pedidos_status
+        ON pedidos(status)
+    `);
+
+    db.run(`
+        CREATE INDEX IF NOT EXISTS idx_pedidos_compra_indevida
+        ON pedidos(compra_indevida)
+    `);
+
+    db.run(`
+        CREATE INDEX IF NOT EXISTS idx_pedido_itens_pedido
+        ON pedido_itens(pedido_id)
+    `);
+
+    db.run(`
+        CREATE INDEX IF NOT EXISTS idx_pedido_itens_produto
+        ON pedido_itens(produto_id)
     `);
 });
