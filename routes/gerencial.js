@@ -10,7 +10,14 @@ router.get("/", gerencialController.pagina);
 
 router.get("/api/status", gerencialController.status);
 
+router.get("/api/produtos", gerencialController.listarProdutos);
 router.post("/api/produtos", gerencialController.criarProduto);
+
+router.get("/api/produtos/:id", gerencialController.buscarProduto);
+router.put("/api/produtos/:id", gerencialController.atualizarProduto);
+router.patch("/api/produtos/:id/ativar", gerencialController.ativarProduto);
+router.patch("/api/produtos/:id/desativar", gerencialController.desativarProduto);
+router.delete("/api/produtos/:id", gerencialController.excluirProduto);
 router.post("/api/produtos/:id/importar-imagens", gerencialController.importarImagensProduto);
 
 router.get("/api/pedidos/indevidos", gerencialController.listarComprasIndevidas);

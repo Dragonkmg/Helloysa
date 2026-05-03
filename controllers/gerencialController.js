@@ -42,6 +42,92 @@ async function criarProduto(req, res) {
   }
 }
 
+async function listarProdutos(req, res) {
+  try {
+    const produtos = await gerencialRepo.listarProdutos({
+      busca: req.query.busca,
+      ativo: req.query.ativo,
+      limite: req.query.limite
+    });
+
+    return res.json({
+      erro: false,
+      produtos
+    });
+  } catch (erro) {
+    return responderErro(res, erro, "Erro interno ao listar produtos.");
+  }
+}
+
+async function buscarProduto(req, res) {
+  try {
+    const produto = await gerencialRepo.buscarProdutoGerencial(req.params.id);
+
+    return res.json({
+      erro: false,
+      produto
+    });
+  } catch (erro) {
+    return responderErro(res, erro, "Erro interno ao buscar produto.");
+  }
+}
+
+async function atualizarProduto(req, res) {
+  try {
+    const produto = await gerencialRepo.atualizarProduto(req.params.id, req.body);
+
+    return res.json({
+      erro: false,
+      produto,
+      mensagem: "Produto atualizado com sucesso."
+    });
+  } catch (erro) {
+    return responderErro(res, erro, "Erro interno ao atualizar produto.");
+  }
+}
+
+async function ativarProduto(req, res) {
+  try {
+    const produto = await gerencialRepo.alterarAtivoProduto(req.params.id, 1);
+
+    return res.json({
+      erro: false,
+      produto,
+      mensagem: "Produto ativado com sucesso."
+    });
+  } catch (erro) {
+    return responderErro(res, erro, "Erro interno ao ativar produto.");
+  }
+}
+
+async function desativarProduto(req, res) {
+  try {
+    const produto = await gerencialRepo.alterarAtivoProduto(req.params.id, 0);
+
+    return res.json({
+      erro: false,
+      produto,
+      mensagem: "Produto desativado com sucesso."
+    });
+  } catch (erro) {
+    return responderErro(res, erro, "Erro interno ao desativar produto.");
+  }
+}
+
+async function excluirProduto(req, res) {
+  try {
+    const resultado = await gerencialRepo.excluirProduto(req.params.id);
+
+    return res.json({
+      erro: false,
+      resultado,
+      mensagem: "Produto excluído com sucesso."
+    });
+  } catch (erro) {
+    return responderErro(res, erro, "Erro interno ao excluir produto.");
+  }
+}
+
 async function importarImagensProduto(req, res) {
   try {
     const resultado = await gerencialRepo.importarImagensProduto(req.params.id);
@@ -104,6 +190,12 @@ module.exports = {
   pagina,
   status,
   criarProduto,
+  listarProdutos,
+  buscarProduto,
+  atualizarProduto,
+  ativarProduto,
+  desativarProduto,
+  excluirProduto,
   importarImagensProduto,
   listarPedidos,
   listarComprasIndevidas,

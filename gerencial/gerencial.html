@@ -291,6 +291,53 @@
       color: var(--roxo);
     }
 
+    .grid-produtos {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card-produto-admin {
+      border: 1px solid rgba(76, 26, 87, 0.10);
+      border-radius: 20px;
+      background: rgba(252, 255, 253, 0.72);
+      padding: 14px;
+    }
+
+    .card-produto-admin h3 {
+      margin: 0;
+      color: var(--roxo);
+      font-size: 1.05rem;
+    }
+
+    .card-produto-admin p {
+      margin: 6px 0;
+      color: var(--suave);
+    }
+
+    .card-produto-admin .acoes {
+      margin: 12px 0 0;
+    }
+
+    .miniatura-produto-admin {
+      width: 72px;
+      height: 88px;
+      border-radius: 14px;
+      object-fit: cover;
+      background: rgba(76, 26, 87, 0.08);
+      border: 1px solid rgba(76, 26, 87, 0.10);
+    }
+
+    .produto-admin-topo {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .produto-admin-info {
+      min-width: 0;
+      flex: 1;
+    }
+
     @media (max-width: 980px) {
       .grid {
         grid-template-columns: 1fr;
@@ -332,12 +379,13 @@
     <section class="grid">
       <div class="coluna">
         <section class="card">
-          <h2>Criar produto</h2>
+          <h2 id="titulo-form-produto">Criar produto</h2>
           <p class="texto">
             Cria o produto no banco. Depois use o ID gerado para criar a pasta de imagens.
           </p>
 
           <form id="form-produto">
+            <input id="produto-id-edicao" type="hidden" />
             <label>
               Nome
               <input id="produto-nome" required placeholder="Ex: Vestido preto" />
@@ -372,6 +420,23 @@
               </label>
             </div>
 
+            <div class="linha">
+              <label>
+                Item pai
+                <input id="produto-item-pai" type="number" step="1" min="1" placeholder="Opcional" />
+              </label>
+
+              <label>
+                Variação
+                <input id="produto-variacao" placeholder="Ex: P, M, G ou Preto" />
+              </label>
+            </div>
+
+            <label>
+              Imagem legada
+              <input id="produto-imagem" placeholder="Opcional. Prefira importar por produto_imagens." />
+            </label>
+
             <label>
               Tags
               <input id="produto-tags" placeholder="vestidos, preto, promoção" />
@@ -389,6 +454,10 @@
               Criar produto
             </button>
           </form>
+
+          <button id="btn-cancelar-edicao-produto" class="botao-secundario escondido" type="button">
+            Cancelar edição
+          </button>
 
           <div id="msg-produto" class="mensagem escondido"></div>
         </section>
@@ -414,7 +483,41 @@
 
           <div id="msg-imagens" class="mensagem escondido"></div>
         </section>
+
+              <section class="card">
+        <h2>Produtos cadastrados</h2>
+        <p class="texto">
+          Liste, busque, edite, ative, desative ou exclua produtos.
+        </p>
+
+        <div class="linha">
+          <label>
+            Busca
+            <input id="busca-produtos" placeholder="Nome, SKU ou tag" />
+          </label>
+
+          <label>
+            Status
+            <select id="filtro-produtos-ativo">
+              <option value="todos">Todos</option>
+              <option value="ativos">Ativos</option>
+              <option value="inativos">Inativos</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="acoes" style="margin-top: 14px;">
+          <button id="btn-listar-produtos" type="button">Listar produtos</button>
+          <button id="btn-limpar-form-produto" class="botao-secundario" type="button">Limpar formulário</button>
+        </div>
+
+        <div id="msg-lista-produtos" class="mensagem escondido"></div>
+
+        <div id="lista-produtos" class="grid-produtos"></div>
+      </section>
       </div>
+
+
 
       <div class="coluna">
         <section class="card">
@@ -474,20 +577,28 @@
       btnListarPedidos: document.getElementById("btn-listar-pedidos"),
       btnListarIndevidos: document.getElementById("btn-listar-indevidos"),
       tabelaPedidos: document.getElementById("tabela-pedidos"),
-      detalhesPedido: document.getElementById("detalhes-pedido")
+      detalhesPedido: document.getElementById("detalhes-pedido"),
+      btnListarProdutos: document.getElementById("btn-listar-produtos"),
+      btnLimparFormProduto: document.getElementById("btn-limpar-form-produto"),
+      btnCancelarEdicaoProduto: document.getElementById("btn-cancelar-edicao-produto"),
+      listaProdutos: document.getElementById("lista-produtos")
     };
 
     document.addEventListener("DOMContentLoaded", iniciar);
 
     function iniciar() {
-      refs.formProduto.addEventListener("submit", criarProduto);
+      refs.formProduto.addEventListener("submit", salvarProduto);
       refs.formImagens.addEventListener("submit", importarImagens);
       refs.formBuscarPedido.addEventListener("submit", buscarPedidoPorForm);
       refs.btnListarPedidos.addEventListener("click", () => listarPedidos(false));
       refs.btnListarIndevidos.addEventListener("click", () => listarPedidos(true));
+      refs.btnListarProdutos.addEventListener("click", listarProdutos);
+      refs.btnLimparFormProduto.addEventListener("click", limparFormularioProduto);
+      refs.btnCancelarEdicaoProduto.addEventListener("click", limparFormularioProduto);
 
       checarStatus();
       listarPedidos(false);
+      listarProdutos();
     }
 
     async function checarStatus() {
@@ -499,44 +610,279 @@
       }
     }
 
-    async function criarProduto(evento) {
+    async function salvarProduto(evento) {
       evento.preventDefault();
 
-      const botao = document.getElementById("btn-criar-produto");
-      alterarBotao(botao, true, "Criando...");
+      const produtoId = valor("produto-id-edicao");
+      const editando = Boolean(produtoId);
 
-      const payload = {
-        nome: valor("produto-nome"),
-        descricao: valor("produto-descricao"),
-        preco: valor("produto-preco"),
-        preco_promo: valor("produto-preco-promo"),
-        qtd: valor("produto-qtd"),
-        sku: valor("produto-sku"),
-        tags: valor("produto-tags"),
-        ativo: Number(valor("produto-ativo"))
-      };
+      const botao = document.getElementById("btn-criar-produto");
+      alterarBotao(botao, true, editando ? "Salvando..." : "Criando...");
+
+      const payload = montarPayloadProduto();
 
       try {
-        const dados = await api("/gerencial/api/produtos", {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
+        const dados = await api(
+          editando
+            ? `/gerencial/api/produtos/${encodeURIComponent(produtoId)}`
+            : "/gerencial/api/produtos",
+          {
+            method: editando ? "PUT" : "POST",
+            body: JSON.stringify(payload)
+          }
+        );
 
         const produto = dados.produto;
 
         mostrarMensagem(
           "msg-produto",
-          `Produto criado com sucesso.\n\nID: ${produto.id}\nNome: ${produto.nome}\n\nAgora crie a pasta:\n${produto.pasta_imagens}`,
+          editando
+            ? `Produto atualizado com sucesso.\n\nID: ${produto.id}\nNome: ${produto.nome}`
+            : `Produto criado com sucesso.\n\nID: ${produto.id}\nNome: ${produto.nome}\n\nAgora crie a pasta:\nHTML/assets/img/${produto.id}`,
           false
         );
 
         document.getElementById("imagem-produto-id").value = produto.id;
+
+        if (!editando) {
+          limparFormularioProduto(false);
+        }
+
+        await listarProdutos();
       } catch (erro) {
         mostrarMensagem("msg-produto", erro.message, true);
       } finally {
-        alterarBotao(botao, false, "Criar produto");
+        alterarBotao(botao, false, editando ? "Salvar alterações" : "Criar produto");
       }
     }
+
+    function montarPayloadProduto() {
+  return {
+    nome: valor("produto-nome"),
+    descricao: valor("produto-descricao"),
+    preco: valor("produto-preco"),
+    preco_promo: valor("produto-preco-promo"),
+    qtd: valor("produto-qtd"),
+    item_pai: valor("produto-item-pai"),
+    variacao: valor("produto-variacao"),
+    imagem: valor("produto-imagem"),
+    sku: valor("produto-sku"),
+    tags: valor("produto-tags"),
+    ativo: Number(valor("produto-ativo"))
+  };
+}
+
+async function listarProdutos() {
+  const busca = valor("busca-produtos");
+  const ativo = valor("filtro-produtos-ativo");
+
+  const params = new URLSearchParams();
+
+  if (busca) params.set("busca", busca);
+  if (ativo) params.set("ativo", ativo);
+
+  try {
+    mostrarMensagem("msg-lista-produtos", "Carregando produtos...", false);
+
+    const dados = await api(`/gerencial/api/produtos?${params.toString()}`);
+
+    renderizarProdutos(dados.produtos || []);
+
+    mostrarMensagem(
+      "msg-lista-produtos",
+      `${dados.produtos.length} produto(s) encontrado(s).`,
+      false
+    );
+  } catch (erro) {
+    mostrarMensagem("msg-lista-produtos", erro.message, true);
+  }
+}
+
+function renderizarProdutos(produtos) {
+  refs.listaProdutos.innerHTML = "";
+
+  if (!produtos.length) {
+    refs.listaProdutos.innerHTML = `
+      <div class="caixa-detalhe">
+        <p>Nenhum produto encontrado.</p>
+      </div>
+    `;
+    return;
+  }
+
+  produtos.forEach((produto) => {
+    const card = document.createElement("article");
+    card.className = "card-produto-admin";
+
+    card.innerHTML = `
+      <div class="produto-admin-topo">
+        <img
+          class="miniatura-produto-admin"
+          src="${produto.imagem_principal ? "/" + escaparAtributo(produto.imagem_principal) : gerarPlaceholderImagem()}"
+          alt="${escaparAtributo(produto.nome)}"
+        >
+
+        <div class="produto-admin-info">
+          <h3>#${produto.id} — ${escapar(produto.nome)}</h3>
+          <p>
+            <strong>Preço:</strong> ${formatarMoeda(produto.preco)}
+            ${
+              produto.preco_promo !== null
+                ? ` | <strong>Promo:</strong> ${formatarMoeda(produto.preco_promo)}`
+                : ""
+            }
+          </p>
+          <p><strong>Qtd:</strong> ${produto.qtd} | <strong>SKU:</strong> ${escapar(produto.sku || "-")}</p>
+          <p><strong>Status:</strong> ${produto.ativo ? "Ativo" : "Inativo"}</p>
+          <p><strong>Tags:</strong> ${produto.tags.length ? produto.tags.map(escapar).join(", ") : "-"}</p>
+          <p><strong>Imagens:</strong> ${produto.total_imagens || 0}</p>
+        </div>
+      </div>
+
+      <div class="acoes">
+        <button type="button" data-acao="editar">Editar</button>
+        <button class="botao-secundario" type="button" data-acao="imagens">Importar imagens</button>
+        ${
+          produto.ativo
+            ? `<button class="botao-secundario" type="button" data-acao="desativar">Desativar</button>`
+            : `<button class="botao-secundario" type="button" data-acao="ativar">Ativar</button>`
+        }
+        <button class="botao-secundario" type="button" data-acao="excluir">Excluir</button>
+      </div>
+    `;
+
+    card.querySelector('[data-acao="editar"]').addEventListener("click", () => carregarProdutoParaEdicao(produto.id));
+    card.querySelector('[data-acao="imagens"]').addEventListener("click", () => {
+      document.getElementById("imagem-produto-id").value = produto.id;
+      mostrarMensagem(
+        "msg-imagens",
+        `Produto #${produto.id} selecionado.\nColoque as imagens em HTML/assets/img/${produto.id} e clique em importar.`,
+        false
+      );
+    });
+
+    const btnAtivo = card.querySelector('[data-acao="ativar"], [data-acao="desativar"]');
+    btnAtivo.addEventListener("click", () => {
+      produto.ativo ? desativarProduto(produto.id) : ativarProduto(produto.id);
+    });
+
+    card.querySelector('[data-acao="excluir"]').addEventListener("click", () => excluirProduto(produto.id));
+
+    refs.listaProdutos.appendChild(card);
+  });
+}
+
+async function carregarProdutoParaEdicao(id) {
+  try {
+    const dados = await api(`/gerencial/api/produtos/${encodeURIComponent(id)}`);
+    preencherFormularioProduto(dados.produto);
+
+    mostrarMensagem(
+      "msg-produto",
+      `Editando produto #${dados.produto.id}. Altere os campos e clique em salvar.`,
+      false
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  } catch (erro) {
+    mostrarMensagem("msg-lista-produtos", erro.message, true);
+  }
+}
+
+function preencherFormularioProduto(produto) {
+  document.getElementById("titulo-form-produto").textContent = `Editar produto #${produto.id}`;
+  document.getElementById("produto-id-edicao").value = produto.id;
+  document.getElementById("produto-nome").value = produto.nome || "";
+  document.getElementById("produto-descricao").value = produto.descricao || "";
+  document.getElementById("produto-preco").value = produto.preco ?? "";
+  document.getElementById("produto-preco-promo").value = produto.preco_promo ?? "";
+  document.getElementById("produto-qtd").value = produto.qtd ?? 0;
+  document.getElementById("produto-item-pai").value = produto.item_pai || "";
+  document.getElementById("produto-variacao").value = produto.variacao || "";
+  document.getElementById("produto-imagem").value = produto.imagem || "";
+  document.getElementById("produto-sku").value = produto.sku || "";
+  document.getElementById("produto-tags").value = (produto.tags || []).join(", ");
+  document.getElementById("produto-ativo").value = produto.ativo ? "1" : "0";
+  document.getElementById("btn-criar-produto").textContent = "Salvar alterações";
+  document.getElementById("btn-cancelar-edicao-produto").classList.remove("escondido");
+}
+
+function limparFormularioProduto(limparMensagem = true) {
+  refs.formProduto.reset();
+
+  document.getElementById("titulo-form-produto").textContent = "Criar produto";
+  document.getElementById("produto-id-edicao").value = "";
+  document.getElementById("produto-qtd").value = 0;
+  document.getElementById("produto-ativo").value = "1";
+  document.getElementById("btn-criar-produto").textContent = "Criar produto";
+  document.getElementById("btn-cancelar-edicao-produto").classList.add("escondido");
+
+  if (limparMensagem) {
+    document.getElementById("msg-produto").classList.add("escondido");
+  }
+}
+
+async function ativarProduto(id) {
+  await alterarAtivoProduto(id, true);
+}
+
+async function desativarProduto(id) {
+  await alterarAtivoProduto(id, false);
+}
+
+async function alterarAtivoProduto(id, ativo) {
+  const acao = ativo ? "ativar" : "desativar";
+
+  try {
+    const dados = await api(`/gerencial/api/produtos/${encodeURIComponent(id)}/${acao}`, {
+      method: "PATCH"
+    });
+
+    mostrarMensagem("msg-lista-produtos", dados.mensagem, false);
+    await listarProdutos();
+  } catch (erro) {
+    mostrarMensagem("msg-lista-produtos", erro.message, true);
+  }
+}
+
+async function excluirProduto(id) {
+  const confirmou = confirm(
+    `Excluir produto #${id}?\n\nEssa ação só funcionará se o produto nunca apareceu em pedidos. Se já foi comprado, desative o produto.`
+  );
+
+  if (!confirmou) return;
+
+  try {
+    const dados = await api(`/gerencial/api/produtos/${encodeURIComponent(id)}`, {
+      method: "DELETE"
+    });
+
+    mostrarMensagem("msg-lista-produtos", dados.mensagem, false);
+    await listarProdutos();
+  } catch (erro) {
+    mostrarMensagem("msg-lista-produtos", erro.message, true);
+  }
+}
+
+function gerarPlaceholderImagem() {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="144" height="176" viewBox="0 0 144 176">
+      <rect width="144" height="176" fill="#f5edf7"/>
+      <text x="72" y="88" text-anchor="middle" fill="#4c1a57" font-family="Arial" font-size="14" font-weight="700">
+        Sem imagem
+      </text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function escaparAtributo(valor) {
+  return escapar(valor).replaceAll("`", "&#096;");
+}
 
     async function importarImagens(evento) {
       evento.preventDefault();
@@ -707,22 +1053,28 @@
     }
 
     async function api(url, opcoes = {}) {
-      const resposta = await fetch(url, {
-        ...opcoes,
-        headers: {
-          "Content-Type": "application/json",
-          ...(opcoes.headers || {})
-        }
-      });
-
-      const dados = await resposta.json();
-
-      if (!resposta.ok || dados.erro) {
-        throw new Error(dados.mensagem || "Erro na requisição.");
-      }
-
-      return dados;
+  const resposta = await fetch(url, {
+    ...opcoes,
+    headers: {
+      "Content-Type": "application/json",
+      ...(opcoes.headers || {})
     }
+  });
+
+  let dados = null;
+
+  try {
+    dados = await resposta.json();
+  } catch (erro) {
+    throw new Error("O servidor não retornou JSON válido.");
+  }
+
+  if (!resposta.ok || dados.erro) {
+    throw new Error(dados.mensagem || "Erro na requisição.");
+  }
+
+  return dados;
+}
 
     function valor(id) {
       return document.getElementById(id).value.trim();

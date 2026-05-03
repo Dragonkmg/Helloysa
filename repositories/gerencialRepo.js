@@ -118,6 +118,185 @@ function normalizarTags(tags) {
     .filter(Boolean);
 }
 
+function normalizarAtivo(valor) {
+  return Number(valor) === 0 ? 0 : 1;
+}
+
+function normalizarProduto(produto, extras = {}) {
+  return {
+    id: produto.id,
+    nome: produto.nome,
+    descricao: produto.descricao || "",
+    preco: Number(produto.preco || 0),
+    preco_promo: produto.preco_promo === null || produto.preco_promo === undefined
+      ? null
+      : Number(produto.preco_promo),
+    qtd: Number(produto.qtd || 0),
+    item_pai: produto.item_pai || "",
+    variacao: produto.variacao || "",
+    imagem: produto.imagem || "",
+    sku: produto.sku || "",
+    ativo: Number(produto.ativo) === 1,
+    criado_em: produto.criado_em,
+    tags: extras.tags || [],
+    imagens: extras.imagens || [],
+    total_imagens: Number(extras.total_imagens || 0),
+    imagem_principal: extras.imagem_principal || ""
+  };
+}
+
+async function buscarTagsProduto(produtoId) {
+  const tags = await all(
+    `
+      SELECT tags.nome
+      FROM tags
+      INNER JOIN produto_tags ON produto_tags.tag_id = tags.id
+      WHERE produto_tags.produto_id = ?
+      ORDER BY tags.nome ASC
+    `,
+    [produtoId]
+  );
+
+  return tags.map((tag) => tag.nome);
+}
+
+async function buscarImagensProduto(produtoId) {
+  return all(
+    `
+      SELECT
+        id,
+        produto_id,
+        caminho,
+        alt,
+        ordem,
+        principal,
+        criado_em
+      FROM produto_imagens
+      WHERE produto_id = ?
+      ORDER BY principal DESC, ordem ASC, id ASC
+    `,
+    [produtoId]
+  );
+}
+
+async function sincronizarTagsProduto(produtoId, tags) {
+  await run(
+    `
+      DELETE FROM produto_tags
+      WHERE produto_id = ?
+    `,
+    [produtoId]
+  );
+
+  for (const tag of tags) {
+    await run(
+      `
+        INSERT OR IGNORE INTO tags (nome)
+        VALUES (?)
+      `,
+      [tag]
+    );
+
+    const tagCriada = await get(
+      `
+        SELECT id
+        FROM tags
+        WHERE nome = ?
+        LIMIT 1
+      `,
+      [tag]
+    );
+
+    if (tagCriada) {
+      await run(
+        `
+          INSERT OR IGNORE INTO produto_tags (
+            produto_id,
+            tag_id
+          )
+          VALUES (?, ?)
+        `,
+        [produtoId, tagCriada.id]
+      );
+    }
+  }
+}
+
+function normalizarDadosProduto(dados = {}, { parcial = false } = {}) {
+  const normalizado = {};
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "nome")) {
+    normalizado.nome = normalizarTexto(dados.nome);
+
+    if (!normalizado.nome) {
+      throw criarErroValidacao("Informe o nome do produto.");
+    }
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "descricao")) {
+    normalizado.descricao = normalizarTexto(dados.descricao);
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "preco")) {
+    normalizado.preco = normalizarNumero(dados.preco, NaN);
+
+    if (!Number.isFinite(normalizado.preco) || normalizado.preco < 0) {
+      throw criarErroValidacao("Informe um preço válido.");
+    }
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "preco_promo")) {
+    normalizado.preco_promo =
+      dados.preco_promo === "" ||
+      dados.preco_promo === null ||
+      dados.preco_promo === undefined
+        ? null
+        : normalizarNumero(dados.preco_promo, null);
+
+    if (
+      normalizado.preco_promo !== null &&
+      (!Number.isFinite(normalizado.preco_promo) || normalizado.preco_promo < 0)
+    ) {
+      throw criarErroValidacao("Informe um preço promocional válido ou deixe vazio.");
+    }
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "qtd")) {
+    normalizado.qtd = normalizarInteiro(dados.qtd, 0);
+
+    if (normalizado.qtd < 0) {
+      throw criarErroValidacao("A quantidade não pode ser negativa.");
+    }
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "item_pai")) {
+    const itemPai = normalizarTexto(dados.item_pai);
+    normalizado.item_pai = itemPai || null;
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "variacao")) {
+    normalizado.variacao = normalizarTexto(dados.variacao);
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "imagem")) {
+    normalizado.imagem = normalizarTexto(dados.imagem);
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "sku")) {
+    normalizado.sku = normalizarTexto(dados.sku);
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "ativo")) {
+    normalizado.ativo = normalizarAtivo(dados.ativo);
+  }
+
+  if (!parcial || Object.prototype.hasOwnProperty.call(dados, "tags")) {
+    normalizado.tags = normalizarTags(dados.tags);
+  }
+
+  return normalizado;
+}
+
 function normalizarPedidoResumo(pedido) {
   return {
     id: pedido.id,
@@ -158,32 +337,7 @@ function normalizarItemPedido(item) {
 }
 
 async function criarProduto(dados = {}) {
-  const nome = normalizarTexto(dados.nome);
-  const descricao = normalizarTexto(dados.descricao);
-  const preco = normalizarNumero(dados.preco, NaN);
-  const precoPromo = dados.preco_promo === "" || dados.preco_promo === null || dados.preco_promo === undefined
-    ? null
-    : normalizarNumero(dados.preco_promo, null);
-  const qtd = normalizarInteiro(dados.qtd, 0);
-  const sku = normalizarTexto(dados.sku);
-  const ativo = Number(dados.ativo) === 0 ? 0 : 1;
-  const tags = normalizarTags(dados.tags);
-
-  if (!nome) {
-    throw criarErroValidacao("Informe o nome do produto.");
-  }
-
-  if (!Number.isFinite(preco) || preco < 0) {
-    throw criarErroValidacao("Informe um preço válido.");
-  }
-
-  if (precoPromo !== null && (!Number.isFinite(precoPromo) || precoPromo < 0)) {
-    throw criarErroValidacao("Informe um preço promocional válido ou deixe vazio.");
-  }
-
-  if (qtd < 0) {
-    throw criarErroValidacao("A quantidade não pode ser negativa.");
-  }
+  const produto = normalizarDadosProduto(dados);
 
   await run("BEGIN TRANSACTION");
 
@@ -196,69 +350,38 @@ async function criarProduto(dados = {}) {
           preco,
           preco_promo,
           qtd,
+          item_pai,
+          variacao,
+          imagem,
           sku,
           ativo
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-        nome,
-        descricao,
-        preco,
-        precoPromo,
-        qtd,
-        sku,
-        ativo
+        produto.nome,
+        produto.descricao,
+        produto.preco,
+        produto.preco_promo,
+        produto.qtd,
+        produto.item_pai,
+        produto.variacao,
+        produto.imagem,
+        produto.sku,
+        produto.ativo
       ]
     );
 
     const produtoId = resultadoProduto.id;
 
-    for (const tag of tags) {
-      await run(
-        `
-          INSERT OR IGNORE INTO tags (nome)
-          VALUES (?)
-        `,
-        [tag]
-      );
-
-      const tagCriada = await get(
-        `
-          SELECT id
-          FROM tags
-          WHERE nome = ?
-          LIMIT 1
-        `,
-        [tag]
-      );
-
-      if (tagCriada) {
-        await run(
-          `
-            INSERT OR IGNORE INTO produto_tags (
-              produto_id,
-              tag_id
-            )
-            VALUES (?, ?)
-          `,
-          [produtoId, tagCriada.id]
-        );
-      }
-    }
+    await sincronizarTagsProduto(produtoId, produto.tags);
 
     await run("COMMIT");
 
     return {
       id: produtoId,
-      nome,
-      descricao,
-      preco,
-      preco_promo: precoPromo,
-      qtd,
-      sku,
-      ativo,
-      tags,
+      ...produto,
+      ativo: produto.ativo === 1,
       pasta_imagens: `HTML/assets/img/${produtoId}`
     };
   } catch (erro) {
@@ -279,8 +402,12 @@ async function buscarProduto(id) {
         preco,
         preco_promo,
         qtd,
+        item_pai,
+        variacao,
+        imagem,
         sku,
-        ativo
+        ativo,
+        criado_em
       FROM produtos
       WHERE id = ?
       LIMIT 1
@@ -497,8 +624,270 @@ async function buscarPedido(id) {
   };
 }
 
+async function buscarProdutoGerencial(id) {
+  const produto = await buscarProduto(id);
+  const tags = await buscarTagsProduto(produto.id);
+  const imagens = await buscarImagensProduto(produto.id);
+
+  return normalizarProduto(produto, {
+    tags,
+    imagens,
+    total_imagens: imagens.length,
+    imagem_principal: imagens[0]?.caminho || ""
+  });
+}
+
+async function listarProdutos({ busca = "", ativo = "todos", limite = 100 } = {}) {
+  const limiteSeguro = Math.min(Math.max(Number(limite) || 100, 1), 300);
+  const filtros = [];
+  const params = [];
+
+  const buscaLimpa = normalizarTexto(busca);
+
+  if (buscaLimpa) {
+    filtros.push(`
+      (
+        produtos.nome LIKE ?
+        OR produtos.descricao LIKE ?
+        OR produtos.sku LIKE ?
+        OR EXISTS (
+          SELECT 1
+          FROM produto_tags
+          INNER JOIN tags ON tags.id = produto_tags.tag_id
+          WHERE produto_tags.produto_id = produtos.id
+            AND tags.nome LIKE ?
+        )
+      )
+    `);
+
+    params.push(
+      `%${buscaLimpa}%`,
+      `%${buscaLimpa}%`,
+      `%${buscaLimpa}%`,
+      `%${buscaLimpa}%`
+    );
+  }
+
+  if (ativo === "ativos") {
+    filtros.push("produtos.ativo = 1");
+  }
+
+  if (ativo === "inativos") {
+    filtros.push("produtos.ativo = 0");
+  }
+
+  const where = filtros.length
+    ? `WHERE ${filtros.join(" AND ")}`
+    : "";
+
+  params.push(limiteSeguro);
+
+  const produtos = await all(
+    `
+      SELECT
+        produtos.id,
+        produtos.nome,
+        produtos.descricao,
+        produtos.preco,
+        produtos.preco_promo,
+        produtos.qtd,
+        produtos.item_pai,
+        produtos.variacao,
+        produtos.imagem,
+        produtos.sku,
+        produtos.ativo,
+        produtos.criado_em,
+        COUNT(DISTINCT produto_imagens.id) AS total_imagens,
+        (
+          SELECT caminho
+          FROM produto_imagens
+          WHERE produto_imagens.produto_id = produtos.id
+          ORDER BY principal DESC, ordem ASC, id ASC
+          LIMIT 1
+        ) AS imagem_principal
+      FROM produtos
+      LEFT JOIN produto_imagens ON produto_imagens.produto_id = produtos.id
+      ${where}
+      GROUP BY produtos.id
+      ORDER BY produtos.id DESC
+      LIMIT ?
+    `,
+    params
+  );
+
+  const produtosCompletos = [];
+
+  for (const produto of produtos) {
+    const tags = await buscarTagsProduto(produto.id);
+
+    produtosCompletos.push(
+      normalizarProduto(produto, {
+        tags,
+        total_imagens: produto.total_imagens,
+        imagem_principal: produto.imagem_principal
+      })
+    );
+  }
+
+  return produtosCompletos;
+}
+
+async function atualizarProduto(id, dados = {}) {
+  const produtoId = validarId(id, "ID do produto");
+  await buscarProduto(produtoId);
+
+  const produto = normalizarDadosProduto(dados);
+
+  await run("BEGIN TRANSACTION");
+
+  try {
+    await run(
+      `
+        UPDATE produtos
+        SET
+          nome = ?,
+          descricao = ?,
+          preco = ?,
+          preco_promo = ?,
+          qtd = ?,
+          item_pai = ?,
+          variacao = ?,
+          imagem = ?,
+          sku = ?,
+          ativo = ?
+        WHERE id = ?
+      `,
+      [
+        produto.nome,
+        produto.descricao,
+        produto.preco,
+        produto.preco_promo,
+        produto.qtd,
+        produto.item_pai,
+        produto.variacao,
+        produto.imagem,
+        produto.sku,
+        produto.ativo,
+        produtoId
+      ]
+    );
+
+    await sincronizarTagsProduto(produtoId, produto.tags);
+
+    await run("COMMIT");
+
+    return buscarProdutoGerencial(produtoId);
+  } catch (erro) {
+    await run("ROLLBACK");
+    throw erro;
+  }
+}
+
+async function alterarAtivoProduto(id, ativo) {
+  const produtoId = validarId(id, "ID do produto");
+  await buscarProduto(produtoId);
+
+  await run(
+    `
+      UPDATE produtos
+      SET ativo = ?
+      WHERE id = ?
+    `,
+    [normalizarAtivo(ativo), produtoId]
+  );
+
+  return buscarProdutoGerencial(produtoId);
+}
+
+async function excluirProduto(id) {
+  const produtoId = validarId(id, "ID do produto");
+  const produto = await buscarProduto(produtoId);
+
+  const usadoEmPedidos = await get(
+    `
+      SELECT COUNT(*) AS total
+      FROM pedido_itens
+      WHERE produto_id = ?
+    `,
+    [produtoId]
+  );
+
+  if (Number(usadoEmPedidos?.total || 0) > 0) {
+    throw criarErroValidacao(
+      "Este produto já aparece em pedidos. Para preservar o histórico, desative o produto em vez de excluir."
+    );
+  }
+
+  const possuiFilhos = await get(
+    `
+      SELECT COUNT(*) AS total
+      FROM produtos
+      WHERE item_pai = ?
+    `,
+    [produtoId]
+  );
+
+  if (Number(possuiFilhos?.total || 0) > 0) {
+    throw criarErroValidacao(
+      "Este produto possui variações/filhos vinculados. Desative-o ou remova as variações primeiro."
+    );
+  }
+
+  await run("BEGIN TRANSACTION");
+
+  try {
+    await run(
+      `
+        DELETE FROM produto_imagens
+        WHERE produto_id = ?
+      `,
+      [produtoId]
+    );
+
+    await run(
+      `
+        DELETE FROM produto_tags
+        WHERE produto_id = ?
+      `,
+      [produtoId]
+    );
+
+    await run(
+      `
+        DELETE FROM comentarios
+        WHERE produto_id = ?
+      `,
+      [produtoId]
+    );
+
+    await run(
+      `
+        DELETE FROM produtos
+        WHERE id = ?
+      `,
+      [produtoId]
+    );
+
+    await run("COMMIT");
+
+    return {
+      id: produtoId,
+      nome: produto.nome,
+      excluido: true
+    };
+  } catch (erro) {
+    await run("ROLLBACK");
+    throw erro;
+  }
+}
+
 module.exports = {
   criarProduto,
+  listarProdutos,
+  buscarProdutoGerencial,
+  atualizarProduto,
+  alterarAtivoProduto,
+  excluirProduto,
   importarImagensProduto,
   listarPedidos,
   buscarPedido
