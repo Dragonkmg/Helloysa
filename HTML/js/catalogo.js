@@ -10,6 +10,15 @@ export function renderizarCatalogo(produtos) {
 
     container.innerHTML = "";
 
+    if (!produtos || produtos.length === 0) {
+        container.innerHTML = `
+            <p class="text-center text-muted">
+                Nenhum produto encontrado.
+            </p>
+        `;
+        return;
+    }
+
     produtos.forEach(produto => {
         container.innerHTML += criarCardProduto(produto);
     });
