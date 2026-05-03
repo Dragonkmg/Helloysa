@@ -7,6 +7,7 @@ const path = require("path");
 const produtosRoutes = require("./routes/produtos");
 const produtoDetalheRoutes = require("./routes/produtoDetalhe");
 const pedidosRoutes = require("./routes/pedidos");
+const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = 3000;
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, "HTML")));
 app.use("/produtos", produtosRoutes);
 app.use("/produto", produtoDetalheRoutes);
 app.use("/pedidos", pedidosRoutes);
+app.use("/auth", authRoutes);
 
 // Página inicial
 app.get("/", (req, res) => {
