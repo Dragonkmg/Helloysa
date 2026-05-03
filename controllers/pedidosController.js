@@ -2,7 +2,10 @@ const pedidosRepo = require("../repositories/pedidosRepo");
 
 async function criarPedido(req, res) {
   try {
-    const pedido = await pedidosRepo.criarPedido(req.body);
+    const pedido = await pedidosRepo.criarPedido({
+      ...req.body,
+      usuario: req.usuario
+    });
 
     return res.status(201).json({
       erro: false,
@@ -16,6 +19,7 @@ async function criarPedido(req, res) {
 
     return res.status(status).json({
       erro: true,
+      precisa_login: erro.precisa_login || false,
       mensagem: erro.status
         ? erro.message
         : "Erro interno ao criar pedido."

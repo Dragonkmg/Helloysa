@@ -35,6 +35,13 @@ function criarErroValidacao(mensagem) {
   return erro;
 }
 
+function criarErroAutenticacao(mensagem) {
+  const erro = new Error(mensagem);
+  erro.status = 401;
+  erro.precisa_login = true;
+  return erro;
+}
+
 function obterPrecoFinal(produto) {
   const preco = Number(produto.preco || 0);
   const precoPromo = Number(produto.preco_promo || 0);
@@ -108,7 +115,19 @@ function escolherStatusEstoque(statusAtual, novoStatus) {
   return statusAtual;
 }
 
-async function criarPedido({ cliente = {}, itens = [] } = {}) {
+function validarUsuarioPedido(usuario) {
+  if (!usuario || !usuario.id) {
+    throw criarErroAutenticacao("Faça login para finalizar a compra.");
+  }
+
+  if (Number(usuario.ativo) !== 1) {
+    throw criarErroAutenticacao("Usuário inativo. Faça login novamente.");
+  }
+}
+
+async function criarPedido({ usuario, itens = [] } = {}) {
+  validarUsuarioPedido(usuario);
+
   const itensNormalizados = normalizarItens(itens);
 
   await run("BEGIN TRANSACTION");
@@ -201,6 +220,7 @@ async function criarPedido({ cliente = {}, itens = [] } = {}) {
     const pedidoCriado = await run(
       `
         INSERT INTO pedidos (
+          usuario_id,
           cliente_nome,
           cliente_email,
           cliente_telefone,
@@ -212,12 +232,13 @@ async function criarPedido({ cliente = {}, itens = [] } = {}) {
           motivo_indevido,
           aviso_cliente
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-        cliente.nome || "Cliente não informado",
-        cliente.email || "",
-        cliente.telefone || "",
+        usuario.id,
+        usuario.nome || "Cliente não informado",
+        usuario.email || "",
+        usuario.telefone || "",
         total,
         total,
         status,
@@ -291,6 +312,7 @@ async function criarPedido({ cliente = {}, itens = [] } = {}) {
 
     return {
       id: pedidoId,
+      usuario_id: usuario.id,
       status,
       status_estoque: statusEstoque,
       compra_indevida: compraIndevida,
