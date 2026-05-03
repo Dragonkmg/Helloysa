@@ -1,4 +1,4 @@
-const db = require("./database");
+const db = require("../DB/database");
 
 db.all("PRAGMA table_info(produtos);", (err, rows) => {
     if (err) {
