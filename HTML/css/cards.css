@@ -1,0 +1,276 @@
+/* =========================
+   CARDS DO CATÁLOGO
+========================= */
+
+.produto-coluna {
+  margin-bottom: 2rem;
+}
+
+.produto-card {
+  position: relative;
+  height: 100%;
+
+  border: 1px solid rgba(76, 26, 87, 0.14);
+  border-radius: 22px;
+
+  background: var(--cor-fundo);
+  box-shadow: 0 12px 30px rgba(31, 23, 34, 0.08);
+
+  overflow: hidden;
+  cursor: pointer;
+
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.produto-card:hover {
+  transform: translateY(-7px) scale(1.025);
+  border-color: rgba(207, 153, 95, 0.75);
+  box-shadow: 0 22px 48px rgba(76, 26, 87, 0.2);
+}
+
+.produto-card:focus-within {
+  border-color: rgba(207, 153, 95, 0.85);
+  box-shadow: 0 0 0 4px rgba(207, 153, 95, 0.18);
+}
+
+.produto-card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  color: inherit;
+  text-decoration: none;
+}
+
+.produto-card-link:focus {
+  outline: none;
+}
+
+.produto-card-carrossel {
+  position: relative;
+  width: 100%;
+  height: 290px;
+
+  background:
+    radial-gradient(circle at top, rgba(207, 153, 95, 0.16), transparent 45%),
+    rgba(76, 26, 87, 0.05);
+
+  overflow: hidden;
+}
+
+.produto-card-trilho {
+  display: flex;
+  width: 100%;
+  height: 100%;
+
+  transform: translateX(0%);
+  transition: transform 0.35s ease;
+}
+
+.produto-card-slide {
+  min-width: 100%;
+  width: 100%;
+  height: 100%;
+}
+
+.produto-card-img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+  object-fit: cover;
+
+  transition: transform 0.35s ease;
+}
+
+.produto-card:hover .produto-card-img {
+  transform: scale(1.055);
+}
+
+.produto-card-seta {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+
+  width: 30px;
+  height: 30px;
+
+  border: 1px solid rgba(76, 26, 87, 0.14);
+  border-radius: 999px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(252, 255, 253, 0.9);
+  color: var(--cor-roxo);
+
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transform: translateY(-50%);
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.produto-card:hover .produto-card-seta {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.produto-card-seta:hover {
+  background: var(--cor-roxo);
+  color: var(--cor-fundo);
+}
+
+.produto-card-seta:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.produto-card-seta.anterior {
+  left: 10px;
+}
+
+.produto-card-seta.proxima {
+  right: 10px;
+}
+
+.produto-card-seta:disabled {
+  display: none;
+}
+
+.produto-card-indicadores {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  transform: translateX(-50%);
+}
+
+.produto-card-indicador {
+  width: 7px;
+  height: 7px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: rgba(252, 255, 253, 0.72);
+  box-shadow: 0 2px 6px rgba(31, 23, 34, 0.16);
+
+  cursor: pointer;
+  padding: 0;
+
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
+}
+
+.produto-card-indicador.ativo {
+  width: 18px;
+  background: var(--cor-dourado);
+}
+
+.produto-card-conteudo {
+  position: relative;
+  z-index: 3;
+
+  padding: 1.15rem 1rem 1.25rem;
+  text-align: center;
+
+  background: var(--cor-fundo);
+}
+
+.produto-card-titulo {
+  margin: 0 0 0.65rem;
+
+  color: var(--cor-roxo);
+  font-size: 1.02rem;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.produto-card-precos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.produto-card-preco-original {
+  color: rgba(76, 26, 87, 0.48);
+  font-size: 0.95rem;
+  text-decoration: line-through;
+}
+
+.produto-card-preco-final {
+  color: var(--cor-texto);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.produto-card-preco-promo {
+  color: var(--cor-verde);
+}
+
+.produto-card-selo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 6;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  background: var(--cor-dourado);
+  color: var(--cor-roxo);
+
+  font-size: 0.76rem;
+  font-weight: 900;
+
+  box-shadow: 0 8px 18px rgba(207, 153, 95, 0.25);
+}
+
+@media (max-width: 768px) {
+  .produto-card-carrossel {
+    height: 240px;
+  }
+
+  .produto-card-seta {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .produto-card-carrossel {
+    height: 220px;
+  }
+
+  .produto-card {
+    border-radius: 18px;
+  }
+
+  .produto-card-conteudo {
+    padding: 1rem 0.8rem 1.1rem;
+  }
+}

@@ -1,0 +1,21 @@
+async function testarApi(url) {
+  console.log("\n==============================");
+  console.log(url);
+  console.log("==============================");
+
+  try {
+    const resposta = await fetch(url);
+    const dados = await resposta.json();
+
+    console.log(JSON.stringify(dados, null, 2));
+  } catch (erro) {
+    console.error("Erro ao testar API:", erro);
+  }
+}
+
+async function main() {
+  await testarApi("http://localhost:3000/produtos");
+  await testarApi("http://localhost:3000/produto/1");
+}
+
+main();

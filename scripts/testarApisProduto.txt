@@ -1,0 +1,55 @@
+
+==============================
+http://localhost:3000/produtos
+==============================
+[
+  {
+    "id": 1,
+    "nome": "Calça branca",
+    "descricao": "Calça Branca",
+    "preco": 15.99,
+    "preco_promo": 14,
+    "qtd": 3,
+    "imagem": "assets/img/Produtos/1/calca.webp",
+    "sku": "CL-BR"
+  }
+]
+
+==============================
+http://localhost:3000/produto/1
+==============================
+{
+  "erro": false,
+  "produto": {
+    "id": 1,
+    "nome": "Calça branca",
+    "descricao": "Calça Branca",
+    "preco": 15.99,
+    "preco_promo": 14,
+    "qtd": 3,
+    "item_pai": "",
+    "variacao": "",
+    "imagem": "",
+    "sku": "CL-BR",
+    "ativo": 1,
+    "criado_em": "",
+    "imagens": [
+      {
+        "id": 1,
+        "produto_id": 1,
+        "caminho": "assets/img/Produtos/1/calca.webp",
+        "alt": "Calça branca frente",
+        "ordem": 1,
+        "principal": 1
+      },
+      {
+        "id": 2,
+        "produto_id": 1,
+        "caminho": "assets/img/Produtos/1/calca2.webp",
+        "alt": "Calça branca lado",
+        "ordem": 2,
+        "principal": null
+      }
+    ]
+  }
+}

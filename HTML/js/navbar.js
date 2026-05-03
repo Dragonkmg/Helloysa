@@ -1,18 +1,17 @@
 (function () {
-  const CHAVE_CARRINHO = 'helloja_carrinho_v1';
+  const CHAVE_CARRINHO = "helloja_carrinho_v1";
 
-  document.addEventListener('DOMContentLoaded', iniciarNavbar);
+  document.addEventListener("DOMContentLoaded", iniciarNavbar);
 
   function iniciarNavbar() {
     renderizarNavbar();
-    configurarBusca();
+    configurarBuscaNavbar();
     configurarComportamentoNavbar();
     atualizarContadorCarrinho();
-    marcarLinkAtivo();
   }
 
   function renderizarNavbar() {
-    const root = document.getElementById('navbar-root');
+    const root = document.getElementById("navbar-root");
 
     if (!root) {
       return;
@@ -23,32 +22,32 @@
         <a href="/index.html" class="logo flex-shrink-0" aria-label="Helloja"></a>
 
         <form class="search-bar flex-grow-1 mx-3" id="formBuscaNavbar">
-          <input 
-            id="inputBuscaNavbar" 
-            type="text" 
-            class="form-control" 
+          <input
+            id="inputBusca"
+            type="text"
+            class="form-control"
             placeholder="Buscar produtos..."
             autocomplete="off"
           >
         </form>
 
         <div class="nav-links d-flex flex-nowrap gap-3">
-          <a href="/index.html" class="tag-link" data-nav="catalogo">Produtos</a>
-          <a href="/index.html?tag=ofertas" class="tag-link" data-nav="ofertas">Ofertas</a>
+          <a href="/index.html" class="tag-link active" data-tag="catalogo">Produtos</a>
+          <a href="/index.html?tag=ofertas" class="tag-link" data-tag="ofertas">Ofertas</a>
         </div>
 
         <div class="user-actions d-flex flex-nowrap gap-2 ms-3">
-          <a href="/carrinho.html" class="btn-icon btn-cart" aria-label="Carrinho" data-nav="carrinho">
+          <a href="/carrinho.html" class="btn-icon btn-cart" aria-label="Carrinho">
             <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2Zm10 0c-1.1 0-1.99.9-1.99 2S15.9 22 17 22s2-.9 2-2-.9-2-2-2ZM7.2 14.8c-.75 0-1.4-.42-1.73-1.03L2 4H1V2h2.35l.95 2h15.4c.75 0 1.25.78.94 1.46l-2.9 6.22A2.99 2.99 0 0 1 15.02 13H8.1l-1.1 2H19v2H7.2Z"/>
+              <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2Zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2ZM7.2 14.8c-.75 0-1.4-.42-1.73-1.03L2 4H1V2h2.35l.95 2h15.4c.75 0 1.25.78.94 1.46l-2.9 6.22A2.99 2.99 0 0 1 15.02 13H8.1l-1.1 2H19v2H7.2Z"/>
             </svg>
 
             <span id="contador-carrinho" class="contador-carrinho">0</span>
           </a>
 
-          <a href="/perfil.html" class="btn-icon" aria-label="Perfil" data-nav="perfil">
+          <a href="/perfil.html" class="btn-icon" aria-label="Perfil">
             <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5Zm0 2c-3.34 0-10 1.68-10 5v3h20v-3c0-3.32-6.66-5-10-5Z"/>
+              <path d="M12 12c2.76 0 5-2.24 5-5S14.76 2 12 2 7 4.24 7 7s2.24 5 5 5Zm0 2c-3.34 0-10 1.68-10 5v3h20v-3c0-3.32-6.66-5-10-5Z"/>
             </svg>
           </a>
         </div>
@@ -56,28 +55,28 @@
     `;
   }
 
-  function configurarBusca() {
-    const form = document.getElementById('formBuscaNavbar');
-    const input = document.getElementById('inputBuscaNavbar');
+  function configurarBuscaNavbar() {
+    const form = document.getElementById("formBuscaNavbar");
+    const input = document.getElementById("inputBusca");
 
     if (!form || !input) {
       return;
     }
 
     const params = new URLSearchParams(window.location.search);
-    const buscaAtual = params.get('busca');
+    const buscaAtual = params.get("busca");
 
     if (buscaAtual) {
       input.value = buscaAtual;
     }
 
-    form.addEventListener('submit', (evento) => {
+    form.addEventListener("submit", (evento) => {
       evento.preventDefault();
 
       const termo = input.value.trim();
 
       if (!termo) {
-        window.location.href = '/index.html';
+        window.location.href = "/index.html";
         return;
       }
 
@@ -86,55 +85,56 @@
   }
 
   function configurarComportamentoNavbar() {
-    const navbar = document.getElementById('mainNavbar');
+    const navbar = document.getElementById("mainNavbar");
 
     if (!navbar) {
       return;
     }
 
-    let mousePertoDoTopo = false;
-    let mouseNaNavbar = false;
-    let focoNaNavbar = false;
+    let ultimoScroll = window.scrollY;
 
-    function atualizarVisibilidade() {
-      const estaNoTopo = window.scrollY <= 20;
-      const deveMostrar = estaNoTopo || mousePertoDoTopo || mouseNaNavbar || focoNaNavbar;
+    function atualizarNavbar() {
+      const scrollAtual = window.scrollY;
+      const pertoDoTopo = scrollAtual < 80;
+      const subindo = scrollAtual < ultimoScroll;
 
-      navbar.classList.toggle('navbar-escondida', !deveMostrar);
+      if (pertoDoTopo || subindo) {
+        navbar.classList.add("visible");
+      } else {
+        navbar.classList.remove("visible");
+      }
+
+      ultimoScroll = scrollAtual;
     }
 
-    window.addEventListener('scroll', atualizarVisibilidade);
+    navbar.classList.add("visible");
 
-    document.addEventListener('mousemove', (evento) => {
-      mousePertoDoTopo = evento.clientY <= 90;
-      atualizarVisibilidade();
-    });
+    window.addEventListener("scroll", atualizarNavbar);
+  }
 
-    navbar.addEventListener('mouseenter', () => {
-      mouseNaNavbar = true;
-      atualizarVisibilidade();
-    });
+  function carregarCarrinho() {
+    const carrinhoSalvo = localStorage.getItem(CHAVE_CARRINHO);
 
-    navbar.addEventListener('mouseleave', () => {
-      mouseNaNavbar = false;
-      atualizarVisibilidade();
-    });
+    if (!carrinhoSalvo) {
+      return { itens: [] };
+    }
 
-    navbar.addEventListener('focusin', () => {
-      focoNaNavbar = true;
-      atualizarVisibilidade();
-    });
+    try {
+      const carrinho = JSON.parse(carrinhoSalvo);
 
-    navbar.addEventListener('focusout', () => {
-      focoNaNavbar = false;
-      atualizarVisibilidade();
-    });
+      if (!carrinho || !Array.isArray(carrinho.itens)) {
+        return { itens: [] };
+      }
 
-    atualizarVisibilidade();
+      return carrinho;
+    } catch (erro) {
+      console.error("Erro ao ler carrinho:", erro);
+      return { itens: [] };
+    }
   }
 
   function atualizarContadorCarrinho() {
-    const contador = document.getElementById('contador-carrinho');
+    const contador = document.getElementById("contador-carrinho");
 
     if (!contador) {
       return;
@@ -147,69 +147,6 @@
     }, 0);
 
     contador.textContent = totalItens;
-  }
-
-  function carregarCarrinho() {
-    const carrinhoSalvo = localStorage.getItem(CHAVE_CARRINHO);
-
-    if (!carrinhoSalvo) {
-      return {
-        itens: []
-      };
-    }
-
-    try {
-      const carrinho = JSON.parse(carrinhoSalvo);
-
-      if (!carrinho || !Array.isArray(carrinho.itens)) {
-        return {
-          itens: []
-        };
-      }
-
-      return carrinho;
-    } catch (erro) {
-      console.error('Erro ao ler carrinho:', erro);
-
-      return {
-        itens: []
-      };
-    }
-  }
-
-  function marcarLinkAtivo() {
-    const caminho = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
-    const tag = params.get('tag');
-
-    document.querySelectorAll('[data-nav]').forEach((link) => {
-      link.classList.remove('active');
-    });
-
-    if (caminho.includes('carrinho')) {
-      marcarAtivo('carrinho');
-      return;
-    }
-
-    if (caminho.includes('perfil')) {
-      marcarAtivo('perfil');
-      return;
-    }
-
-    if (tag === 'ofertas') {
-      marcarAtivo('ofertas');
-      return;
-    }
-
-    marcarAtivo('catalogo');
-  }
-
-  function marcarAtivo(nome) {
-    const link = document.querySelector(`[data-nav="${nome}"]`);
-
-    if (link) {
-      link.classList.add('active');
-    }
   }
 
   window.HellojaNavbar = {

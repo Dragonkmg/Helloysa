@@ -2,81 +2,72 @@ import { buscarProdutos } from "./busca.js";
 import { renderizarCatalogo } from "./catalogo.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const navbar = document.getElementById("mainNavbar");
-    const inputBusca = document.getElementById("inputBusca");
-    const linksDeTag = document.querySelectorAll(".tag-link");
+  const inputBusca = document.getElementById("inputBusca");
+  const tagLinks = document.querySelectorAll(".tag-link[data-tag]");
 
-    let timeout;
-    let ultimoScroll = window.scrollY;
-    let tagAtual = "catalogo";
+  let timeout;
+  let tagAtual = "catalogo";
 
-    function atualizarNavbar() {
-        if (!navbar) return;
+  const params = new URLSearchParams(window.location.search);
+  const buscaUrl = params.get("busca");
+  const tagUrl = params.get("tag");
 
-        const scrollAtual = window.scrollY;
-        const pertoDoTopo = scrollAtual < 80;
-        const subindo = scrollAtual < ultimoScroll;
+  if (buscaUrl && inputBusca) {
+    inputBusca.value = buscaUrl;
+  }
 
-        if (pertoDoTopo || subindo) {
-            navbar.classList.add("visible");
-        } else {
-            navbar.classList.remove("visible");
-        }
+  if (tagUrl) {
+    tagAtual = tagUrl;
+  }
 
-        ultimoScroll = scrollAtual;
+  async function atualizarCatalogo() {
+    try {
+      const termo = inputBusca?.value || "";
+
+      const produtos = await buscarProdutos({
+        busca: termo,
+        tag: tagAtual
+      });
+
+      renderizarCatalogo(produtos);
+    } catch (erro) {
+      console.error("Erro ao atualizar catálogo:", erro);
     }
+  }
 
-    async function atualizarCatalogo() {
-        try {
-            const termo = inputBusca?.value || "";
-
-            const produtos = await buscarProdutos({
-                busca: termo,
-                tag: tagAtual
-            });
-
-            renderizarCatalogo(produtos);
-        } catch (erro) {
-            console.error("Erro ao atualizar catálogo:", erro);
-        }
-    }
-
-    function marcarTagAtiva(linkAtivo) {
-        linksDeTag.forEach(link => {
-            link.classList.remove("active");
-        });
-
-        linkAtivo.classList.add("active");
-    }
-
-    if (navbar) {
-        navbar.classList.add("visible");
-        window.addEventListener("scroll", atualizarNavbar);
-    }
-
-    if (inputBusca) {
-        inputBusca.addEventListener("input", () => {
-            clearTimeout(timeout);
-
-            timeout = setTimeout(() => {
-                atualizarCatalogo();
-            }, 300);
-        });
-    }
-
-    linksDeTag.forEach(link => {
-        link.addEventListener("click", event => {
-            event.preventDefault();
-
-            const novaTag = link.dataset.tag;
-
-            if (!novaTag) return;
-
-            tagAtual = novaTag;
-            marcarTagAtiva(link);
-            atualizarCatalogo();
-        });
+  function atualizarLinkAtivo() {
+    tagLinks.forEach((link) => {
+      link.classList.toggle("active", link.dataset.tag === tagAtual);
     });
+  }
 
-    atualizarCatalogo();
+  if (inputBusca) {
+    inputBusca.addEventListener("input", () => {
+      clearTimeout(timeout);
+
+      timeout = setTimeout(() => {
+        atualizarCatalogo();
+      }, 300);
+    });
+  }
+
+  tagLinks.forEach((link) => {
+    link.addEventListener("click", (evento) => {
+      evento.preventDefault();
+
+      const novaTag = link.dataset.tag;
+
+      if (!novaTag) {
+        return;
+      }
+
+      tagAtual = novaTag;
+
+      atualizarLinkAtivo();
+      atualizarCatalogo();
+    });
+  });
+
+  atualizarLinkAtivo();
+  atualizarCatalogo();
 });
